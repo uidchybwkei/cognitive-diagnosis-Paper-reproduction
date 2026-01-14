@@ -181,3 +181,50 @@ python export_student_results.py --run_dir outputs/dataStructure/<timestamp>
 - `docs/ASSUMPTIONS.md`
 
   - 记录由于论文省略细节或提供的数据集不一致而做出的选择。
+
+## 实验结果
+
+### Data Structure数据集实验结果
+
+在dataStructure数据集上使用80%训练比例的实验结果：
+
+```json
+{
+  "dataset": "dataStructure",
+  "train_ratio": 0.8,
+  "val_ratio": 0.0,
+  "split_seed": 42,
+  "training_seed": 42,
+  "n_iters": 1000,
+  "elapsed_sec": 0.07590198516845703,
+  "test_theory_mae": 0.11133681194155481,
+  "test_theory_rmse": 0.17458728386170572,
+  "test_theory_n": 1086.0,
+  "test_experiment_mae": 0.16277593069657567,
+  "test_experiment_rmse": 0.23121613331021126,
+  "test_experiment_n": 189.0,
+  "test_all_mae": 0.11896190483935791,
+  "test_all_rmse": 0.18408474548099737,
+  "test_all_n": 1275.0
+}
+```
+
+**关键指标总结：**
+
+| 指标 | 理论部分 | 实验部分 | 全部 |
+|------|----------|----------|------|
+| **MAE** | 0.1113 | 0.1628 | 0.1190 |
+| **RMSE** | 0.1746 | 0.2312 | 0.1841 |
+| **测试样本数** | 1086 | 189 | 1275 |
+
+### 模型性能对比
+
+下图展示了不同模型在dataStructure数据集上的性能对比，包括CDF-CSE、FuzzyCDF、IRT、PMF-5D、PMF-10D和PMF-KD等模型在理论、实验和混合数据上的MAE和RMSE表现：
+
+![模型性能对比](MD/images/cognitive_diagnostic_full_verbatim/model_comparison.png)
+
+**观察结果：**
+- 实验结果基本符合论文中的描述
+- CDF-CSE模型在理论和实验部分都表现出较好的预测性能
+- 实验部分的预测误差普遍高于理论部分，这与论文中的观察一致
+- 随着测试比例的变化，各模型的性能趋势与论文报告相符
