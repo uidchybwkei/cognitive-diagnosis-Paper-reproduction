@@ -1,0 +1,48 @@
+data:
+  dataset_root: dataset
+  dataset_name: dataStructure
+  score_scale: 10.0
+  missing_value: -1.0
+  q_normalize: true
+  q_zero_row_strategy: unknown_skill
+  split_mode: combined
+
+  dataset_specs:
+    dataStructure:
+      n_theory: 58
+      n_experiment: 10
+      expected_k: 19
+    networkSecurity:
+      n_theory: 10
+      n_experiment: 8
+      expected_k: 7
+
+split:
+  seed: 42
+  train_ratio: 0.8
+  val_ratio: 0.0
+  train_ratios_sparsity: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+
+model:
+  sigma_r: 1.0
+  sigma_rp: 1.0
+  sigma_alpha: 1.0
+  sigma_c: 1.0
+  mu_alpha: 0.8
+  mu_c: 0.8
+
+training:
+  seed: 42
+  n_iters: 1000
+  r1: 0.01
+  r2: 0.01
+  log_every: 50
+  clip_params: true
+  clip_min: 0.0
+  clip_max: 1.0
+  init_method: prior_sample
+
+outputs:
+  root: outputs
+  save_params: true
+  save_history: true
