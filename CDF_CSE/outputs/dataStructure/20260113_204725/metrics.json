@@ -1,0 +1,18 @@
+{
+  "dataset": "dataStructure",
+  "train_ratio": 0.9,
+  "val_ratio": 0.0,
+  "split_seed": 42,
+  "training_seed": 42,
+  "n_iters": 1000,
+  "elapsed_sec": 0.10576677322387695,
+  "test_theory_mae": 0.27236884007218576,
+  "test_theory_rmse": 0.35368131538054093,
+  "test_theory_n": 546.0,
+  "test_experiment_mae": 0.2664676169997705,
+  "test_experiment_rmse": 0.3405214339728237,
+  "test_experiment_n": 92.0,
+  "test_all_mae": 0.2715178800053171,
+  "test_all_rmse": 0.3518140273972029,
+  "test_all_n": 638.0
+}

@@ -1,0 +1,87 @@
+data:
+  dataset_root: dataset
+  dataset_name: dataStructure
+  score_scale: 10.0
+  missing_value: -1.0
+  q_normalize: true
+  q_zero_row_strategy: unknown_skill
+  split_mode: combined
+
+  dataset_specs:
+    dataStructure:
+      n_theory: 58
+      n_experiment: 10
+      expected_k: 19
+    networkSecurity:
+      n_theory: 10
+      n_experiment: 8
+      expected_k: 7
+
+split:
+  seed: 42
+  train_ratio: 0.8
+  val_ratio: 0.0
+  train_ratios_sparsity: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+
+model:
+  # sigma_r：理论题观测噪声的精度（precision）
+  # 对应论文中 R_{ji} ~ N(η_{ji}, σ_R^{-1})
+  # 数学上：控制理论题平方误差项在目标函数中的权重
+  # 直觉上：表示我们对“理论题分数是否可靠”的信任程度
+  # - 值大：更信任理论题分数，模型会更努力拟合理论题成绩
+  # - 值小：认为理论题噪声较大，对理论题误差更宽容
+  sigma_r: 1.0
+
+  # sigma_rp：实验题观测噪声的精度（precision）
+  # 对应论文中 R'_{je} ~ N(η'_{je}, σ_{R'}^{-1})
+  # 数学上：控制实验题平方误差项在目标函数中的权重
+  # 直觉上：表示我们对“实验/编程题分数是否可靠”的信任程度
+  # - 值大：实验题对参数 c 和 α 的影响更强
+  # - 值小：实验题误差被弱化，更依赖先验和理论题
+  sigma_rp: 1.0
+
+  # sigma_alpha：技能掌握度 α 的高斯先验精度
+  # 对应论文中 α_{jk} ~ N(μ_α, σ_α^{-1})
+  # 数学上：L2 正则项的强度，约束 α 不偏离先验均值
+  # 直觉上：表示我们有多相信“学生的技能掌握度应接近总体水平”
+  # - 值大：强正则，α 更平滑、不易极端
+  # - 值小：弱正则，α 更贴合数据，但可能过拟合
+  sigma_alpha: 1.0
+
+  # sigma_c：学生整体编程能力 c 的高斯先验精度
+  # 对应论文中 c_j ~ N(μ_c, σ_c^{-1})
+  # 数学上：c 的 L2 正则强度
+  # 直觉上：控制学生编程能力是否允许被数据“拉得很开”
+  # - 值大：c_j 更集中在 μ_c 附近，个体差异被压缩
+  # - 值小：c_j 更多由实验题数据决定，个体差异更明显
+  sigma_c: 1.0
+
+  # mu_alpha：技能掌握度 α 的先验均值
+  # 对应论文中的 μ_α
+  # 数学上：高斯先验的中心位置
+  # 直觉上：表示“一个平均学生对单个技能的默认掌握水平”
+  # 设置为 0.8 表示：在没有充分数据时，假设学生对技能掌握程度偏高
+  mu_alpha: 0.8
+
+  # mu_c：学生整体编程能力 c 的先验均值
+  # 对应论文中的 μ_c
+  # 数学上：c_j 正则化回归的目标点
+  # 直觉上：表示“平均学生的默认编程能力水平”
+  # 设置为 0.8 表示：整体假设学生具备较好的编程基础
+  mu_c: 0.8
+
+training:
+  seed: 42
+  n_iters: 1000
+  r1: 0.01
+  r2: 0.01
+  log_every: 50
+  clip_params: true
+  clip_min: 0.0
+  clip_max: 1.0
+  init_method: prior_sample
+
+outputs:
+  root: outputs
+  save_params: true
+  save_history: true

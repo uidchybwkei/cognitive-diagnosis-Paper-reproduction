@@ -1,0 +1,212 @@
+[
+  {
+    "iter": 1,
+    "train_F": 3038.141618888859,
+    "test_theory_mae": 0.6955902031363802,
+    "test_theory_rmse": 0.8900628043701135,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.8255767682102007,
+    "test_experiment_rmse": 1.1206206540120582,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 50,
+    "train_F": 246.82392598094975,
+    "test_theory_mae": 0.2292400784383033,
+    "test_theory_rmse": 0.3423100998708951,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.23818526178417185,
+    "test_experiment_rmse": 0.3110471627339505,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 100,
+    "train_F": 96.72086437784516,
+    "test_theory_mae": 0.14544818774419058,
+    "test_theory_rmse": 0.23075798137846434,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.16771715596277115,
+    "test_experiment_rmse": 0.2388406441326706,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 150,
+    "train_F": 74.51790201449381,
+    "test_theory_mae": 0.1244635653262008,
+    "test_theory_rmse": 0.19605626806346887,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.1544808404108186,
+    "test_experiment_rmse": 0.22816586457213897,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 200,
+    "train_F": 69.50539481459178,
+    "test_theory_mae": 0.11753398038547254,
+    "test_theory_rmse": 0.18348789798226986,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15098221541520773,
+    "test_experiment_rmse": 0.22623400116622505,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 250,
+    "train_F": 68.11247492010297,
+    "test_theory_mae": 0.11461059671079576,
+    "test_theory_rmse": 0.1785729469420018,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15027296377798177,
+    "test_experiment_rmse": 0.2258959624133938,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 300,
+    "train_F": 67.68256215816798,
+    "test_theory_mae": 0.11342105697622569,
+    "test_theory_rmse": 0.1765134008151141,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15009981224296803,
+    "test_experiment_rmse": 0.22587875902980503,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 350,
+    "train_F": 67.54252834425165,
+    "test_theory_mae": 0.11287087836513678,
+    "test_theory_rmse": 0.1755863090564739,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15003675954740164,
+    "test_experiment_rmse": 0.22591375406355704,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 400,
+    "train_F": 67.49553508430876,
+    "test_theory_mae": 0.11260128215246681,
+    "test_theory_rmse": 0.17513847968173718,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15002082653472235,
+    "test_experiment_rmse": 0.22594463140221058,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 450,
+    "train_F": 67.47947103124214,
+    "test_theory_mae": 0.11247033407106845,
+    "test_theory_rmse": 0.17490807424956129,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15001897195005745,
+    "test_experiment_rmse": 0.2259639880883314,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 500,
+    "train_F": 67.47390933648997,
+    "test_theory_mae": 0.11239356460741312,
+    "test_theory_rmse": 0.17478333052464687,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.1500194669709731,
+    "test_experiment_rmse": 0.2259745322179731,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 550,
+    "train_F": 67.47196533013575,
+    "test_theory_mae": 0.11234836897218528,
+    "test_theory_rmse": 0.17471318727408577,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.1500203698147559,
+    "test_experiment_rmse": 0.2259797447904441,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 600,
+    "train_F": 67.47128071867017,
+    "test_theory_mae": 0.11232115741990265,
+    "test_theory_rmse": 0.1746726914626336,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15002112963893385,
+    "test_experiment_rmse": 0.22598207621893895,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 650,
+    "train_F": 67.47103815416247,
+    "test_theory_mae": 0.11230472844543121,
+    "test_theory_rmse": 0.1746488960605266,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15002165821055405,
+    "test_experiment_rmse": 0.22598297295276643,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 700,
+    "train_F": 67.47095178074275,
+    "test_theory_mae": 0.11229479041256034,
+    "test_theory_rmse": 0.17463475188257446,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.1500219961166537,
+    "test_experiment_rmse": 0.2259832123441827,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 750,
+    "train_F": 67.47092089661453,
+    "test_theory_mae": 0.11228877061936608,
+    "test_theory_rmse": 0.1746262815684308,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15002220260539578,
+    "test_experiment_rmse": 0.2259831838634123,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 800,
+    "train_F": 67.47090981516249,
+    "test_theory_mae": 0.11228512063547653,
+    "test_theory_rmse": 0.17462118449850286,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15002232556469344,
+    "test_experiment_rmse": 0.22598306934865448,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 850,
+    "train_F": 67.47090582746749,
+    "test_theory_mae": 0.11228290593201912,
+    "test_theory_rmse": 0.17461810756835308,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15002239770025333,
+    "test_experiment_rmse": 0.2259829460616983,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 900,
+    "train_F": 67.47090438896129,
+    "test_theory_mae": 0.11228156138857641,
+    "test_theory_rmse": 0.17461624619872235,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15002243968017379,
+    "test_experiment_rmse": 0.22598284169309463,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 950,
+    "train_F": 67.47090386896392,
+    "test_theory_mae": 0.11228074478832187,
+    "test_theory_rmse": 0.17461511854878164,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.1500224640255762,
+    "test_experiment_rmse": 0.22598276219328492,
+    "test_experiment_n": 189.0
+  },
+  {
+    "iter": 1000,
+    "train_F": 67.47090368066262,
+    "test_theory_mae": 0.11228024868170913,
+    "test_theory_rmse": 0.17461443470722052,
+    "test_theory_n": 1086.0,
+    "test_experiment_mae": 0.15002247813877864,
+    "test_experiment_rmse": 0.2259827051310163,
+    "test_experiment_n": 189.0
+  }
+]
