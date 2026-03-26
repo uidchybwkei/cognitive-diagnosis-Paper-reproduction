@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import time
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -11,6 +10,7 @@ import numpy as np
 from src.data.dataset import load_dataset_from_config
 from src.models.cdf_cse import predict
 from src.utils.config import load_yaml
+from src.utils.students import save_predictions_npz, write_students_csv
 
 
 def _str2bool(v: str) -> bool:
@@ -51,40 +51,6 @@ def _default_out_dir(run_dir: Optional[Path]) -> Path:
         return run_dir / "export"
     ts = time.strftime("%Y%m%d_%H%M%S")
     return Path("outputs_export") / ts
-
-
-def _format_float(x: float) -> str:
-    return f"{float(x):.6f}"
-
-
-def _write_students_csv(path: Path, c: np.ndarray, alpha: np.ndarray) -> None:
-    n = int(alpha.shape[0])
-    k = int(alpha.shape[1])
-
-    header = ["student_id", "c"]
-    header.extend([f"alpha_k{i}" for i in range(k)])
-    header.extend(["alpha_mean", "alpha_sum", "alpha_topk"])
-
-    with path.open("w", encoding="utf-8", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(header)
-
-        for j in range(n):
-            a = alpha[j]
-            a_mean = float(np.mean(a))
-            a_sum = float(np.sum(a))
-
-            top_n = min(3, k)
-            topk_idx = np.argsort(a)[::-1][:top_n]
-            topk = "|".join([f"k{int(i)}" for i in topk_idx])
-
-            row = [
-                str(j),
-                _format_float(c[j]),
-            ]
-            row.extend([_format_float(x) for x in a.tolist()])
-            row.extend([_format_float(a_mean), _format_float(a_sum), topk])
-            w.writerow(row)
 
 
 def main() -> None:
@@ -146,16 +112,16 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if bool(args.save_students_csv):
-        _write_students_csv(out_dir / "students.csv", c=c, alpha=alpha)
+        write_students_csv(out_dir / "students.csv", c=c, alpha=alpha)
 
     if bool(args.save_predictions):
-        np.savez_compressed(
+        save_predictions_npz(
             out_dir / "predictions.npz",
             eta_theory=eta_theory,
             eta_experiment=eta_experiment,
-            rhat_all=rhat_all,
             c=c,
             alpha=alpha,
+            extra_arrays={"rhat_all": rhat_all},
         )
 
     print(str(out_dir))
