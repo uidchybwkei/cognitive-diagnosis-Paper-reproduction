@@ -8,8 +8,8 @@ import os
 # =========================
 # 1. 输入文件路径
 # =========================
-response_path = "dataset/networkSecurity/R.csv"
-q_matrix_path = "dataset/networkSecurity/q.csv"
+response_path = "../CDF_CSE/dataset/networkSecurity/R.csv"
+q_matrix_path = "../CDF_CSE/dataset/networkSecurity/q.csv"
 
 # =========================
 # 2. 读取 & 自动清洗 R

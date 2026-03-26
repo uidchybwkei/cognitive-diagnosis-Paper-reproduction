@@ -8,7 +8,7 @@ import os
 # =========================
 # 1. 读取数据（自动清洗）
 # =========================
-file_path = "dataset/networkSecurity/R.csv"
+file_path = "../CDF_CSE/dataset/networkSecurity/R.csv"
 
 df = pd.read_csv(file_path)
 
