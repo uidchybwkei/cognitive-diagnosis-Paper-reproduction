@@ -1,0 +1,18 @@
+{
+  "model": "fuzzycdf",
+  "dataset": "dataStructure",
+  "split": "test",
+  "train_ratio": 0.8,
+  "val_ratio": 0.0,
+  "split_seed": 42,
+  "split_mode": "combined",
+  "test_theory_mae": 0.3291859132857545,
+  "test_theory_rmse": 0.39669520515979895,
+  "test_theory_n": 1086.0,
+  "test_experiment_mae": 0.31394244694303886,
+  "test_experiment_rmse": 0.36272614958932553,
+  "test_experiment_n": 189.0,
+  "test_all_mae": 0.3269262935690696,
+  "test_all_rmse": 0.39184574219657686,
+  "test_all_n": 1275.0
+}

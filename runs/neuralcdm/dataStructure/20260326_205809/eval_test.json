@@ -1,0 +1,19 @@
+{
+  "model": "neuralcdm",
+  "dataset": "dataStructure",
+  "split": "test",
+  "train_ratio": 0.8,
+  "val_ratio": 0.0,
+  "split_seed": 42,
+  "split_mode": "combined",
+  "label_threshold": 0.5,
+  "test_theory_mae": 0.047930670342442784,
+  "test_theory_rmse": 0.16950467325642019,
+  "test_theory_n": 1086.0,
+  "test_experiment_mae": 0.08133582326167463,
+  "test_experiment_rmse": 0.22340636061559882,
+  "test_experiment_n": 189.0,
+  "test_all_mae": 0.05288249301047011,
+  "test_all_rmse": 0.17852519561370964,
+  "test_all_n": 1275.0
+}
