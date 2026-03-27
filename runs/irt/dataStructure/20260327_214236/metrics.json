@@ -1,0 +1,17 @@
+{
+  "model": "irt",
+  "dataset": "dataStructure",
+  "train_ratio": 0.8,
+  "val_ratio": 0.0,
+  "split_seed": 42,
+  "epochs": 300,
+  "test_theory_mae": 0.11163070651103998,
+  "test_theory_rmse": 0.17202007006642014,
+  "test_theory_n": 1086.0,
+  "test_experiment_mae": 0.14017821229481822,
+  "test_experiment_rmse": 0.2082247013667693,
+  "test_experiment_n": 189.0,
+  "test_all_mae": 0.11586245442722358,
+  "test_all_rmse": 0.177852758568179,
+  "test_all_n": 1275.0
+}

@@ -10,7 +10,7 @@ from infra.evaluation import load_artifacts_from_args, load_config_for_args
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--model", type=str, required=True, choices=["cdf_cse", "fuzzycdf", "neuralcdm"])
+    p.add_argument("--model", type=str, required=True, choices=["cdf_cse", "fuzzycdf", "neuralcdm", "dina", "irt"])
     p.add_argument("--run_dir", type=str, default=None)
     p.add_argument("--config", type=str, default=None)
     p.add_argument("--dataset", type=str, default=None)

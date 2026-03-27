@@ -9,7 +9,7 @@ from infra.trainers import train_model
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--model", type=str, required=True, choices=["cdf_cse", "fuzzycdf", "neuralcdm"])
+    p.add_argument("--model", type=str, required=True, choices=["cdf_cse", "fuzzycdf", "neuralcdm", "dina", "irt"])
     p.add_argument("--config", type=str, default=None)
     p.add_argument("--dataset", type=str, default=None)
     p.add_argument("--train_ratio", type=float, default=None)

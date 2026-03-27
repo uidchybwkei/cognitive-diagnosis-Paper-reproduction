@@ -382,6 +382,290 @@ def train_fuzzycdf(cfg: Dict[str, Any], run_dir: str | Path) -> TrainResult:
     return TrainResult(metrics=metrics, history=history, artifacts=artifacts, meta=meta)
 
 
+def train_dina(cfg: Dict[str, Any], run_dir: str | Path) -> TrainResult:
+    """
+    DINA 需要二值作答；因此对统一输入的 `R.csv`（已归一化到 [0,1]）按 cfg.dina.label_threshold 做 0/1 化。
+    """
+    try:
+        import torch
+        import torch.nn as nn
+        import torch.optim as optim
+    except ImportError as exc:
+        raise ImportError("DINA training requires torch") from exc
+
+    ds = _load_dataset_raw_q(cfg)  # DINA 的 Q 需要是原始 0/1 矩阵
+    split_cfg = cfg.get("split", {})
+    splits = make_splits(
+        ds,
+        train_ratio=float(split_cfg.get("train_ratio", 0.8)),
+        val_ratio=float(split_cfg.get("val_ratio", 0.0)),
+        seed=int(split_cfg.get("seed", 42)),
+        split_mode=str(cfg.get("data", {}).get("split_mode", "combined")),
+    )
+
+    device_name = str(cfg.get("dina", {}).get("device", "auto"))
+    if device_name == "auto":
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    else:
+        device = torch.device(device_name)
+
+    epochs = int(cfg.get("dina", {}).get("epochs", 300))
+    lr = float(cfg.get("dina", {}).get("lr", 0.01))
+    log_every = int(cfg.get("dina", {}).get("log_every", 50))
+    label_threshold = float(cfg.get("dina", {}).get("label_threshold", 0.6))
+
+    n_students = ds.n_students
+    n_items = ds.n_theory + ds.n_experiment
+    n_skills = ds.n_skills
+
+    # Q: (n_items, n_skills)
+    q_matrix = ds.combined_q().astype(np.float32)
+    q_tensor = torch.tensor(q_matrix, dtype=torch.float32, device=device)
+
+    # 二值响应标签: (n_students, n_items)
+    combined_r = ds.combined_r().astype(np.float32)
+    y = (combined_r >= label_threshold).astype(np.float32)
+    y_tensor = torch.tensor(y, dtype=torch.float32, device=device)
+
+    # 训练掩码：只在 train split 上计算损失
+    train_mask = np.concatenate([splits.train_theory, splits.train_experiment], axis=1)
+    train_mask_tensor = torch.tensor(train_mask, dtype=torch.float32, device=device)
+    n_train_obs = float(np.asarray(train_mask, dtype=bool).sum())
+
+    class DINA(nn.Module):
+        def __init__(self, n_students: int, n_items: int, n_skills: int, q: torch.Tensor):
+            super().__init__()
+            self.alpha = nn.Parameter(torch.randn(n_students, n_skills))
+            self.slip = nn.Parameter(torch.rand(n_items))
+            self.guess = nn.Parameter(torch.rand(n_items))
+            self.register_buffer("Q", q)
+
+        def forward(self) -> tuple[torch.Tensor, torch.Tensor]:
+            alpha_prob = torch.sigmoid(self.alpha)  # (N, K)
+            alpha_expanded = alpha_prob.unsqueeze(1)  # (N, 1, K)
+            Q_expanded = self.Q.unsqueeze(0)  # (1, M, K)
+
+            # DINA: eta_ij = prod_k alpha_jk^{q_ik}
+            eta = torch.prod(alpha_expanded ** Q_expanded, dim=2)  # (N, M)
+
+            slip = torch.sigmoid(self.slip).unsqueeze(0)  # (1, M)
+            guess = torch.sigmoid(self.guess).unsqueeze(0)  # (1, M)
+
+            prob = eta * (1.0 - slip) + (1.0 - eta) * guess  # (N, M)
+            return prob, alpha_prob
+
+    model = DINA(n_students=n_students, n_items=n_items, n_skills=n_skills, q=q_tensor).to(device)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+
+    history: List[Dict[str, Any]] = []
+    for epoch in range(1, epochs + 1):
+        model.train()
+        pred, _alpha_prob = model()
+        diff2 = (pred - y_tensor) ** 2
+        loss = (diff2 * train_mask_tensor).sum() / max(n_train_obs, 1.0)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        if epoch % log_every == 0 or epoch == 1 or epoch == epochs:
+            model.eval()
+            with torch.no_grad():
+                pred_all, alpha_prob = model()
+                pred_theory, pred_experiment = _split_combined_predictions(ds, pred_all.detach().cpu().numpy())
+                true_theory = (ds.r_theory >= label_threshold).astype(float)
+                true_experiment = (ds.r_experiment >= label_threshold).astype(float)
+                epoch_metrics = _evaluate_predictions(
+                    ds=ds,
+                    pred_theory=pred_theory,
+                    pred_experiment=pred_experiment,
+                    splits=splits,
+                    split_name="test",
+                    true_theory=true_theory,
+                    true_experiment=true_experiment,
+                )
+                history.append(
+                    {
+                        "epoch": int(epoch),
+                        "train_loss": float(loss.item()),
+                        **epoch_metrics,
+                    }
+                )
+
+    model.eval()
+    with torch.no_grad():
+        pred_all, alpha_prob = model()
+        pred_np = pred_all.detach().cpu().numpy()
+        alpha_np = alpha_prob.detach().cpu().numpy()
+
+    pred_theory, pred_experiment = _split_combined_predictions(ds, pred_np)
+    true_theory = (ds.r_theory >= label_threshold).astype(float)
+    true_experiment = (ds.r_experiment >= label_threshold).astype(float)
+
+    artifacts = UnifiedArtifacts(
+        c=np.full((ds.n_students,), np.nan, dtype=float),
+        alpha=alpha_np,
+        rhat_all=pred_np,
+        eta_theory=pred_theory,
+        eta_experiment=pred_experiment,
+    )
+
+    metrics: Dict[str, Any] = {
+        "model": "dina",
+        "dataset": ds.name,
+        "train_ratio": float(split_cfg.get("train_ratio", 0.8)),
+        "val_ratio": float(split_cfg.get("val_ratio", 0.0)),
+        "split_seed": int(split_cfg.get("seed", 42)),
+        "epochs": int(epochs),
+        "label_threshold": float(label_threshold),
+    }
+    metrics.update(
+        _evaluate_predictions(
+            ds=ds,
+            pred_theory=pred_theory,
+            pred_experiment=pred_experiment,
+            splits=splits,
+            split_name="test",
+            true_theory=true_theory,
+            true_experiment=true_experiment,
+        )
+    )
+
+    save_run_bundle(run_dir, cfg=cfg, metrics=metrics, artifacts=artifacts, history=history, meta={"model": "dina"})
+    return TrainResult(metrics=metrics, history=history, artifacts=artifacts, meta={"model": "dina"})
+
+
+def train_irt(cfg: Dict[str, Any], run_dir: str | Path) -> TrainResult:
+    """
+    IRT 这里按统一输入的 `R.csv`（已归一化到 [0,1]）直接建模为 2PL 的期望作答概率，
+    用 MSE 拟合连续分数；与当前统一评估保持一致。
+    """
+    try:
+        import torch
+        import torch.nn as nn
+        import torch.optim as optim
+    except ImportError as exc:
+        raise ImportError("IRT training requires torch") from exc
+
+    ds = load_dataset_from_config(cfg)
+    split_cfg = cfg.get("split", {})
+    splits = make_splits(
+        ds,
+        train_ratio=float(split_cfg.get("train_ratio", 0.8)),
+        val_ratio=float(split_cfg.get("val_ratio", 0.0)),
+        seed=int(split_cfg.get("seed", 42)),
+        split_mode=str(cfg.get("data", {}).get("split_mode", "combined")),
+    )
+
+    device_name = str(cfg.get("irt", {}).get("device", "auto"))
+    if device_name == "auto":
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    else:
+        device = torch.device(device_name)
+
+    epochs = int(cfg.get("irt", {}).get("epochs", 300))
+    lr = float(cfg.get("irt", {}).get("lr", 0.01))
+    log_every = int(cfg.get("irt", {}).get("log_every", 50))
+
+    n_students = ds.n_students
+    n_items = ds.n_theory + ds.n_experiment
+    n_skills = ds.n_skills
+
+    combined_r = ds.combined_r().astype(np.float32)
+    train_mask = np.concatenate([splits.train_theory, splits.train_experiment], axis=1)
+    train_mask_tensor = torch.tensor(train_mask, dtype=torch.float32, device=device)
+    n_train_obs = float(np.asarray(train_mask, dtype=bool).sum())
+    y_tensor = torch.tensor(combined_r, dtype=torch.float32, device=device)
+
+    class IRT2PL(nn.Module):
+        def __init__(self, n_students: int, n_items: int):
+            super().__init__()
+            self.theta = nn.Parameter(torch.randn(n_students))
+            self.a = nn.Parameter(torch.ones(n_items))
+            self.b = nn.Parameter(torch.zeros(n_items))
+
+        def forward(self) -> torch.Tensor:
+            theta = self.theta.unsqueeze(1)  # (N, 1)
+            a = self.a.unsqueeze(0)  # (1, M)
+            b = self.b.unsqueeze(0)  # (1, M)
+            logits = a * (theta - b)
+            return torch.sigmoid(logits)  # (N, M)
+
+    model = IRT2PL(n_students=n_students, n_items=n_items).to(device)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+
+    history: List[Dict[str, Any]] = []
+    for epoch in range(1, epochs + 1):
+        model.train()
+        pred = model()
+        diff2 = (pred - y_tensor) ** 2
+        loss = (diff2 * train_mask_tensor).sum() / max(n_train_obs, 1.0)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        if epoch % log_every == 0 or epoch == 1 or epoch == epochs:
+            model.eval()
+            with torch.no_grad():
+                pred_all = model()
+                pred_np = pred_all.detach().cpu().numpy()
+                pred_theory, pred_experiment = _split_combined_predictions(ds, pred_np)
+                epoch_metrics = _evaluate_predictions(
+                    ds=ds,
+                    pred_theory=pred_theory,
+                    pred_experiment=pred_experiment,
+                    splits=splits,
+                    split_name="test",
+                )
+                history.append(
+                    {
+                        "epoch": int(epoch),
+                        "train_loss": float(loss.item()),
+                        **epoch_metrics,
+                    }
+                )
+
+    model.eval()
+    with torch.no_grad():
+        pred_all = model()
+        pred_np = pred_all.detach().cpu().numpy()
+        theta_np = model.theta.detach().cpu().numpy()
+
+    pred_theory, pred_experiment = _split_combined_predictions(ds, pred_np)
+    # IRT 没有天然的“每技能掌握度”；这里做一个工程映射：把同一个 theta 广播到所有技能维度。
+    alpha_np = (1.0 / (1.0 + np.exp(-theta_np))).reshape(-1, 1).repeat(n_skills, axis=1)
+
+    artifacts = UnifiedArtifacts(
+        c=theta_np.astype(float),
+        alpha=alpha_np.astype(float),
+        rhat_all=pred_np,
+        eta_theory=pred_theory,
+        eta_experiment=pred_experiment,
+    )
+
+    metrics: Dict[str, Any] = {
+        "model": "irt",
+        "dataset": ds.name,
+        "train_ratio": float(split_cfg.get("train_ratio", 0.8)),
+        "val_ratio": float(split_cfg.get("val_ratio", 0.0)),
+        "split_seed": int(split_cfg.get("seed", 42)),
+        "epochs": int(epochs),
+    }
+    metrics.update(
+        _evaluate_predictions(
+            ds=ds,
+            pred_theory=pred_theory,
+            pred_experiment=pred_experiment,
+            splits=splits,
+            split_name="test",
+        )
+    )
+
+    save_run_bundle(run_dir, cfg=cfg, metrics=metrics, artifacts=artifacts, history=history, meta={"model": "irt"})
+    return TrainResult(metrics=metrics, history=history, artifacts=artifacts, meta={"model": "irt"})
+
+
 def train_model(model_name: str, cfg: Dict[str, Any], run_dir: str | Path) -> TrainResult:
     if model_name == "cdf_cse":
         return train_cdf_cse(cfg, run_dir)
@@ -389,4 +673,8 @@ def train_model(model_name: str, cfg: Dict[str, Any], run_dir: str | Path) -> Tr
         return train_neuralcdm(cfg, run_dir)
     if model_name == "fuzzycdf":
         return train_fuzzycdf(cfg, run_dir)
+    if model_name == "dina":
+        return train_dina(cfg, run_dir)
+    if model_name == "irt":
+        return train_irt(cfg, run_dir)
     raise ValueError(f"Unsupported model={model_name}")

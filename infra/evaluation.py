@@ -48,6 +48,8 @@ def load_artifacts_from_args(model_name: str, *, cfg: Dict[str, Any], args) -> U
         if getattr(args, "snapshot", None) is None:
             raise ValueError("--snapshot is required for model=neuralcdm when --run_dir is unavailable")
         return load_neuralcdm_artifacts(cfg=cfg, snapshot_path=args.snapshot)
+    if model_name in ("dina", "irt"):
+        raise ValueError(f"model={model_name} currently supports evaluation via --run_dir (params.npz).")
     raise ValueError(f"Unsupported model={model_name}")
 
 
@@ -100,6 +102,10 @@ def evaluate_artifacts(
     if model_name == "neuralcdm":
         true_theory = (true_theory >= float(neural_threshold)).astype(float)
         true_experiment = (true_experiment >= float(neural_threshold)).astype(float)
+    if model_name == "dina":
+        dina_threshold = float(cfg.get("dina", {}).get("label_threshold", 0.6))
+        true_theory = (true_theory >= dina_threshold).astype(float)
+        true_experiment = (true_experiment >= dina_threshold).astype(float)
 
     metrics: Dict[str, Any] = {
         "model": str(model_name),
@@ -112,6 +118,8 @@ def evaluate_artifacts(
     }
     if model_name == "neuralcdm":
         metrics["label_threshold"] = float(neural_threshold)
+    if model_name == "dina":
+        metrics["label_threshold"] = float(cfg.get("dina", {}).get("label_threshold", 0.6))
 
     metrics.update(metrics_dict(f"{split}_theory", true_theory, pred_theory, mask_theory))
     metrics.update(metrics_dict(f"{split}_experiment", true_experiment, pred_experiment, mask_experiment))

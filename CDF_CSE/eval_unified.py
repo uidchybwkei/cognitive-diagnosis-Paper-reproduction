@@ -14,6 +14,8 @@ from src.utils.unified_models import (
     UnifiedArtifacts,
     load_cdf_cse_artifacts,
     load_fuzzycdf_artifacts,
+    load_dina_artifacts,
+    load_irt_artifacts,
     load_neuralcdm_artifacts,
 )
 
@@ -59,6 +61,16 @@ def _load_artifacts(model_name: str, args: argparse.Namespace, cfg: Dict[str, An
         if args.snapshot is None:
             raise ValueError("--snapshot is required for model=neuralcdm")
         return load_neuralcdm_artifacts(cfg=cfg, snapshot_path=args.snapshot)
+
+    if model_name in ("dina", "irt"):
+        params_path = args.params
+        if params_path is None:
+            if args.run_dir is None:
+                raise ValueError(f"--params is required for model={model_name} unless --run_dir is provided")
+            params_path = str(Path(args.run_dir) / "params.npz")
+        if model_name == "dina":
+            return load_dina_artifacts(cfg=cfg, params_path=params_path)
+        return load_irt_artifacts(cfg=cfg, params_path=params_path)
 
     raise ValueError(f"Unsupported model={model_name}")
 
@@ -112,6 +124,10 @@ def evaluate_artifacts(
     if model_name == "neuralcdm":
         true_theory = (true_theory >= float(neural_threshold)).astype(float)
         true_experiment = (true_experiment >= float(neural_threshold)).astype(float)
+    if model_name == "dina":
+        dina_threshold = float(cfg.get("dina", {}).get("label_threshold", 0.6))
+        true_theory = (true_theory >= dina_threshold).astype(float)
+        true_experiment = (true_experiment >= dina_threshold).astype(float)
 
     metrics: Dict[str, Any] = {
         "model": str(model_name),
@@ -124,6 +140,8 @@ def evaluate_artifacts(
     }
     if model_name == "neuralcdm":
         metrics["label_threshold"] = float(neural_threshold)
+    if model_name == "dina":
+        metrics["label_threshold"] = float(cfg.get("dina", {}).get("label_threshold", 0.6))
 
     metrics.update(_metrics_dict(f"{split}_theory", true_theory, pred_theory, mask_theory))
     metrics.update(_metrics_dict(f"{split}_experiment", true_experiment, pred_experiment, mask_experiment))
@@ -137,7 +155,7 @@ def evaluate_artifacts(
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--model", type=str, required=True, choices=["cdf_cse", "fuzzycdf", "neuralcdm"])
+    p.add_argument("--model", type=str, required=True, choices=["cdf_cse", "fuzzycdf", "neuralcdm", "dina", "irt"])
     p.add_argument("--run_dir", type=str, default=None)
     p.add_argument("--config", type=str, default=None)
     p.add_argument("--split", type=str, default="test", choices=["train", "val", "test"])

@@ -12,6 +12,8 @@ from src.utils.unified_models import (
     UnifiedArtifacts,
     load_cdf_cse_artifacts,
     load_fuzzycdf_artifacts,
+    load_dina_artifacts,
+    load_irt_artifacts,
     load_neuralcdm_artifacts,
 )
 
@@ -59,12 +61,21 @@ def _load_artifacts(args: argparse.Namespace, cfg: Optional[Dict[str, Any]]) -> 
             raise ValueError("config is required for model=neuralcdm")
         return load_neuralcdm_artifacts(cfg=cfg, snapshot_path=args.snapshot)
 
+    if model_name in ("dina", "irt"):
+        if args.params is None:
+            raise ValueError(f"--params is required for model={model_name} unless --run_dir is provided")
+        if cfg is None:
+            raise ValueError("config is required for model=dina/irt")
+        if model_name == "dina":
+            return load_dina_artifacts(cfg=cfg, params_path=args.params)
+        return load_irt_artifacts(cfg=cfg, params_path=args.params)
+
     raise ValueError(f"Unsupported model={model_name}")
 
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--model", type=str, required=True, choices=["cdf_cse", "fuzzycdf", "neuralcdm"])
+    p.add_argument("--model", type=str, required=True, choices=["cdf_cse", "fuzzycdf", "neuralcdm", "dina", "irt"])
     p.add_argument("--run_dir", type=str, default=None)
     p.add_argument("--config", type=str, default=None)
     p.add_argument("--out_dir", type=str, default=None)
@@ -82,7 +93,7 @@ def main() -> None:
 
     run_dir = Path(args.run_dir) if args.run_dir is not None else None
 
-    if args.model == "cdf_cse" and args.params is None and run_dir is not None:
+    if args.model in ("cdf_cse", "dina", "irt") and args.params is None and run_dir is not None:
         args.params = str(run_dir / "params.npz")
 
     cfg_path = _resolve_config_path(run_dir=run_dir, config_arg=args.config)

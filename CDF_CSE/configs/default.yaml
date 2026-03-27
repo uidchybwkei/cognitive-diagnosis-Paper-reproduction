@@ -85,3 +85,17 @@ outputs:
   root: outputs
   save_params: true
   save_history: true
+
+dina:
+  device: auto
+  epochs: 300
+  lr: 0.01
+  log_every: 50
+  # 对归一化到 [0,1] 的 R.csv 做 0/1 二值化
+  label_threshold: 0.6
+
+irt:
+  device: auto
+  epochs: 300
+  lr: 0.01
+  log_every: 50

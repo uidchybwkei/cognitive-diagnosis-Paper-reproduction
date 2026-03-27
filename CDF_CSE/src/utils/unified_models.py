@@ -179,6 +179,39 @@ def load_neuralcdm_artifacts(cfg: Dict[str, Any], snapshot_path: str | Path) -> 
     )
 
 
+def load_rhat_all_artifacts(cfg: Dict[str, Any], params_path: str | Path) -> UnifiedArtifacts:
+    """
+    直接从 params.npz 读取 rhat_all 并切分为 theory/experiment。
+    适用于由根目录统一训练入口导出的模型（如 dina/irt）。
+    """
+    ds = load_dataset_from_config(cfg)
+    params = np.load(Path(params_path))
+
+    if "rhat_all" not in params:
+        raise ValueError(f"Missing key 'rhat_all' in params.npz: {params_path}")
+
+    c = np.asarray(params["c"], dtype=float).reshape(-1)
+    alpha = np.asarray(params["alpha"], dtype=float)
+    rhat_all = np.asarray(params["rhat_all"], dtype=float)
+
+    eta_theory, eta_experiment = _split_predictions(ds, rhat_all)
+    return UnifiedArtifacts(
+        c=c,
+        alpha=alpha,
+        rhat_all=rhat_all,
+        eta_theory=eta_theory,
+        eta_experiment=eta_experiment,
+    )
+
+
+def load_dina_artifacts(cfg: Dict[str, Any], params_path: str | Path) -> UnifiedArtifacts:
+    return load_rhat_all_artifacts(cfg=cfg, params_path=params_path)
+
+
+def load_irt_artifacts(cfg: Dict[str, Any], params_path: str | Path) -> UnifiedArtifacts:
+    return load_rhat_all_artifacts(cfg=cfg, params_path=params_path)
+
+
 def load_prediction_matrix(path: str | Path) -> np.ndarray:
     in_path = Path(path)
     if in_path.suffix == ".npz":

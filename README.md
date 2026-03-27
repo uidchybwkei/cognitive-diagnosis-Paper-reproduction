@@ -1,10 +1,12 @@
 # Unified Cognitive Diagnosis Infra
 
-这个仓库现在在根目录提供了一套统一入口，用来训练、评估并导出三个模型：
+这个仓库现在在根目录提供了一套统一入口，用来训练、评估并导出五个模型：
 
 - `cdf_cse`
 - `fuzzycdf`
 - `neuralcdm`
+- `dina`
+- `irt`
 
 统一入口脚本位于根目录：
 
@@ -26,6 +28,8 @@ python train.py --model <model_name> --dataset <dataset_name>
 python train.py --model cdf_cse --dataset dataStructure
 python train.py --model fuzzycdf --dataset dataStructure
 python train.py --model neuralcdm --dataset dataStructure
+python train.py --model dina --dataset dataStructure
+python train.py --model irt --dataset dataStructure
 ```
 
 可选参数：
@@ -50,6 +54,8 @@ python eval.py --model <model_name> --run_dir <run_dir>
 python eval.py --model cdf_cse --run_dir runs/cdf_cse/dataStructure/<timestamp>
 python eval.py --model fuzzycdf --run_dir runs/fuzzycdf/dataStructure/<timestamp>
 python eval.py --model neuralcdm --run_dir runs/neuralcdm/dataStructure/<timestamp>
+python eval.py --model dina --run_dir runs/dina/dataStructure/<timestamp>
+python eval.py --model irt --run_dir runs/irt/dataStructure/<timestamp>
 ```
 
 默认评估 `test` split。
@@ -68,6 +74,8 @@ python export_students.py --model <model_name> --run_dir <run_dir>
 python export_students.py --model cdf_cse --run_dir runs/cdf_cse/dataStructure/<timestamp>
 python export_students.py --model fuzzycdf --run_dir runs/fuzzycdf/dataStructure/<timestamp>
 python export_students.py --model neuralcdm --run_dir runs/neuralcdm/dataStructure/<timestamp>
+python export_students.py --model dina --run_dir runs/dina/dataStructure/<timestamp>
+python export_students.py --model irt --run_dir runs/irt/dataStructure/<timestamp>
 ```
 
 默认会写入：
@@ -109,7 +117,7 @@ export/
 
 说明：
 
-- `global_trait` 是一个跨模型的中性字段名，不保证三个模型含义完全一致。
+- `global_trait` 是一个跨模型的中性字段名，不保证各模型含义完全一致。
 - `alpha_k*` 表示学生在各知识点/技能上的掌握度或对应潜在表示。
 
 各模型对应关系：
@@ -123,10 +131,16 @@ export/
 - `neuralcdm`
   - `global_trait = NaN`
   - `alpha = sigmoid(student_emb)`
+- `dina`
+  - `global_trait = NaN`
+  - `alpha = alpha`（学生在各技能上的掌握概率）
+- `irt`
+  - `global_trait = theta`（学生整体能力）
+  - `alpha = sigmoid(theta)`（工程映射：把同一个 theta 广播到所有技能维度）
 
 ## 6. 当前做过的妥协
 
-为了把三个模型统一到一套最简单的 infra 中，做了下面这些妥协。
+为了把这些模型统一到一套最简单的 infra 中，做了下面这些妥协。
 
 ### 6.1 FuzzyCDF
 
@@ -162,7 +176,7 @@ export/
 
 ### 6.3 global_trait 的统一命名
 
-三个模型里并没有天然同义的 `c`：
+这些模型里并没有天然同义的 `c`：
 
 - `CDF_CSE` 有原生 `c`
 - `FuzzyCDF` 更接近 `theta`
@@ -172,7 +186,18 @@ export/
 
 - `global_trait`
 
-这是工程上的统一命名，不代表三个模型的该字段可以直接做严格同义比较。
+这是工程上的统一命名，不代表这些模型的该字段可以直接做严格同义比较。
+
+### 6.4 DINA
+
+DINA 需要二值作答，因此在统一输入中：
+
+- 使用 `cfg.dina.label_threshold`（默认 `0.6`）对归一化到 `[0,1]` 的 `R.csv` 做 `0/1` 化
+
+### 6.5 IRT
+
+当前统一输入中的 `R.csv` 已归一化到 `[0,1]`，因此这里采用 2PL 形式直接对连续分数做拟合（输出仍在 `[0,1]`）；
+`Q.csv` 在 IRT 训练中不会被使用。
 
 ## 7. 推荐理解方式
 
@@ -191,11 +216,13 @@ export/
 
 ## 8. 目前状态
 
-当前已经验证过：
+当前已完成统一接入（可走统一入口训练、评估、导出）：
 
 - `cdf_cse` 可以训练、评估、导出
 - `fuzzycdf` 可以训练、评估、导出
 - `neuralcdm` 可以训练、评估、导出
+- `dina` 可以训练、评估、导出
+- `irt` 可以训练、评估、导出
 
 其中：
 
